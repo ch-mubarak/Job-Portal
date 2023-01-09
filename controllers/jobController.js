@@ -1,6 +1,6 @@
 const Job = require("../models/jobModel");
 
-const postNewJob = async (req, res, next) => {
+const createNewJob = async (req, res, next) => {
   const { userId, email } = req.user;
   const {
     title,
@@ -41,4 +41,32 @@ const postNewJob = async (req, res, next) => {
 
 const getJobDetail = async (req, res) => {
   const { jobId } = req.params;
+  if (!jobId) {
+    throw new Error({ message: "Invalid job id", statusCode: 401 });
+  }
+  try {
+    const job = await Job.findById(jobId)
+      .populate(author)
+      .select({ "author.password": 0 });
+    if (!job) {
+      return res.status(404).json({ message: "No job found" });
+    }
+  } catch (err) {
+    next(err);
+  }
+};
+
+const getAllJobs = async (req, res) => {
+  const limit = req.query.limit || 5;
+  const skip = req.query.skip || 0;
+  try {
+  } catch (err) {
+    next(err);
+  }
+};
+
+module.exports = {
+  createNewJob,
+  getJobDetail,
+  getAllJobs,
 };

@@ -2,15 +2,15 @@ require("dotenv").config();
 const express = require("express");
 const connectDB = require("./config/db");
 const authRoute = require("./routes/authRoute");
-const userRoute = require("./routes/userRoute");
+const applicationRoute = require("./routes/applicationRoute");
 const jobRoute = require("./routes/jobRoute");
-const errorHandler = require("./middleware/errorHandler");
+const errorHandler = require("./middleware/errorMiddleware");
 const app = express();
 app.use(express.json());
 
 app.use("/api/auth", authRoute);
-// app.use("/api/user", userRoute);
-// app.use("/api/job", jobRoute);
+app.use("/api/jobs", jobRoute);
+// app.use("/api/user", applicationRoute);
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 3000;
