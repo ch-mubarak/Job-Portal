@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const Application = require("../models/applicationModel");
+const jobModel = require("../models/jobModel");
 const Job = require("../models/jobModel");
-
 
 //@des apply for new job
 //@route POST /api/applications
@@ -24,7 +24,7 @@ const applyJob = async (req, res, next) => {
       jobId,
       applicant,
       resume,
-      coverLetter,
+      markedCoverLetter: coverLetter,
     });
     res
       .status(201)
@@ -53,7 +53,7 @@ const getApplicants = async (req, res, next) => {
     const applicants = await Application.aggregate([
       {
         $match: {
-          jobId: mongoose.Types.ObjectId("63bd2096428be45578204db0"),
+          jobId: mongoose.Types.ObjectId(jobId),
         },
       },
       {

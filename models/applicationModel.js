@@ -1,4 +1,8 @@
 const mongoose = require("mongoose");
+const { JSDOM } = require("jsdom");
+const createDOMPurify = require("dompurify");
+const {marked} = require("marked");
+const dompurify = createDOMPurify(new JSDOM().window);
 
 const applicationSchema = new mongoose.Schema(
   {
@@ -12,10 +16,22 @@ const applicationSchema = new mongoose.Schema(
       ref: "Job",
       required: true,
     },
-    coverLetter: String,
+    markedCoverLetter: String,
     resume: String,
+    sanitizedCoverLetter: {
+      type: String,
+      required: true,
+    },
   },
   { timestamps: true }
 );
 
+applicationSchema.pre("validate", function (next) {
+  if (this.markedCoverLetter) {
+    this.sanitizedCoverLetter = dompurify.sanitize(
+      marked(this.markedCoverLetter)
+    );
+  }
+  next();
+});
 module.exports = mongoose.model("Application", applicationSchema);
