@@ -2,6 +2,10 @@ const mongoose = require("mongoose");
 const Application = require("../models/applicationModel");
 const Job = require("../models/jobModel");
 
+
+//@des apply for new job
+//@route POST /api/applications
+//@access Private
 const applyJob = async (req, res, next) => {
   try {
     const jobId = req.params.id;
@@ -30,6 +34,9 @@ const applyJob = async (req, res, next) => {
   }
 };
 
+//@des all applicants for a specific job
+//@route GET /api/applications
+//@access Private
 const getApplicants = async (req, res, next) => {
   try {
     const jobId = req.params.id;

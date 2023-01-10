@@ -1,5 +1,8 @@
 const Job = require("../models/jobModel");
 
+//@des create new post
+//@route POST /api/posts
+//@access Private
 const createNewJob = async (req, res, next) => {
   const { userId } = req.user;
   const { title, description, email, skills, experience } = req.body;
@@ -32,6 +35,9 @@ const createNewJob = async (req, res, next) => {
   }
 };
 
+//@des get job details
+//@route GET /api/posts
+//@access Private
 const getJobDetail = async (req, res, next) => {
   const jobId = req.params.id;
   try {
@@ -55,6 +61,9 @@ const getJobDetail = async (req, res, next) => {
   }
 };
 
+//@des retrieve all posted jobs
+//@route GET /api/posts
+//@access Private
 const getAllJobs = async (req, res, next) => {
   const limit = req.query.limit || 5;
   const skip = req.query.skip || 0;
@@ -130,6 +139,9 @@ const getAllJobs = async (req, res, next) => {
   }
 };
 
+//@des Edit post
+//@route PATCH /api/posts
+//@access Private
 const editJob = async (req, res, next) => {
   try {
     const jobId = req.params.id;
@@ -163,6 +175,10 @@ const editJob = async (req, res, next) => {
   }
 };
 
+
+//@des Search jobs
+//@route GET /api/posts
+//@access Private
 const searchJobs = async (req, res, next) => {
   try {
     const keyword = req.query.name;
