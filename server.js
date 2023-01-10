@@ -11,7 +11,7 @@ const jobRoute = require("./routes/jobRoute");
 
 app.use("/api/auth", authRoute);
 app.use("/api/jobs", jobRoute);
-// app.use("/api/user", applicationRoute);
+app.use("/api/applications", applicationRoute);
 
 app.use(errorHandler);
 

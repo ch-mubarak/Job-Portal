@@ -159,9 +159,26 @@ const editJob = async (req, res, next) => {
   }
 };
 
+const searchJobs = async (req, res, next) => {
+  try {
+    const keyword = req.query.name;
+    const jobs = await Job.find({
+      $or: [
+        { title: { $regex: keyword, $options: "i" } },
+        { skills: { $in: [keyword] } },
+      ],
+    });
+    res.status(200).json(jobs);
+  } catch (err) {
+    console.log(err)
+    next(err);
+  }
+};
+
 module.exports = {
   createNewJob,
   getJobDetail,
   getAllJobs,
   editJob,
+  searchJobs,
 };
