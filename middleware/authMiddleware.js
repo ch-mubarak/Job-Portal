@@ -14,7 +14,7 @@ const verifyToken = async (req, res, next) => {
       res.status(401);
       throw new Error("Your not authorized");
     }
-    req.user = user;
+    req.user = { userId: user.id, email: user.email };
     next();
   } catch (err) {
     res.status(401);

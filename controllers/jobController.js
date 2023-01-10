@@ -32,14 +32,14 @@ const createNewJob = async (req, res, next) => {
 };
 
 const getJobDetail = async (req, res, next) => {
-  const { id } = req.params;
+  const jobId = req.params.id;
   try {
-    if (!id) {
+    if (!jobId) {
       res.status(401);
       throw new Error("Invalid job id");
     }
 
-    const job = await Job.findById(id).populate({
+    const job = await Job.findById(jobId).populate({
       path: "author",
       select: "-password -_id",
     });
@@ -65,7 +65,7 @@ const getAllJobs = async (req, res, next) => {
   const pipeline = [];
 
   // conditionally checking if filtering is enabled or not for skill
-  if (skills) {
+  if (req.query.skills) {
     console.log(skills);
     pipeline.push({
       $match: {
@@ -118,10 +118,42 @@ const getAllJobs = async (req, res, next) => {
       },
     }
   );
-
   try {
     const jobs = await Job.aggregate(pipeline);
     return res.status(200).json(jobs);
+  } catch (err) {
+    next(err);
+  }
+};
+
+const editJob = async (req, res, next) => {
+  try {
+    const jobId = req.params.id;
+    const { userId } = req.user;
+    const { title, description, skills, experience } = req.body;
+    const job = await Job.findById(jobId).populate({ path: "author" });
+    if (!job) {
+      res.status(404);
+      throw new Error("Invalid job id");
+    }
+    if (job.author.id !== userId) {
+      res.status(401);
+      throw new Error("Your not authorized");
+    }
+
+    const updatedJob = await Job.findByIdAndUpdate(
+      jobId,
+      {
+        title,
+        experience,
+        skills,
+        description,
+      },
+      { new: true }
+    ).populate({ path: "author", select: "-password" });
+    res
+      .status(201)
+      .json({ message: "job details updated successfully", job: updatedJob });
   } catch (err) {
     next(err);
   }
@@ -131,4 +163,5 @@ module.exports = {
   createNewJob,
   getJobDetail,
   getAllJobs,
+  editJob,
 };
