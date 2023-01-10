@@ -9,20 +9,15 @@ const createNewJob = async (req, res, next) => {
     skills,
     experience,
   } = req.body;
-  if (!(title && description && recruiterEmail)) {
-    throw new Error({
-      message: "Title, description and email are mandatory",
-      statusCode: 401,
-    });
-  }
-
-  if (recruiterEmail !== email) {
-    throw new Error({
-      message: "Entered Email doesn't match with your registered email",
-      statusCode: 401,
-    });
-  }
   try {
+    if (!(title && description && recruiterEmail)) {
+      res.status(401);
+      throw new Error("Title, description and email are mandatory");
+    }
+    if (recruiterEmail !== email) {
+      res.status(401);
+      throw new Error("Entered Email doesn't match with your registered email");
+    }
     const newJob = await Job.create({
       author: userId,
       title,
@@ -39,12 +34,13 @@ const createNewJob = async (req, res, next) => {
   }
 };
 
-const getJobDetail = async (req, res) => {
+const getJobDetail = async (req, res, next) => {
   const { jobId } = req.params;
-  if (!jobId) {
-    throw new Error({ message: "Invalid job id", statusCode: 401 });
-  }
   try {
+    if (!jobId) {
+      res.status(401);
+      throw new Error("Invalid job id");
+    }
     const job = await Job.findById(jobId)
       .populate(author)
       .select({ "author.password": 0 });
@@ -60,6 +56,8 @@ const getAllJobs = async (req, res) => {
   const limit = req.query.limit || 5;
   const skip = req.query.skip || 0;
   try {
+    const jobs = await Job.find();
+    return res.status(200).json(jobs);
   } catch (err) {
     next(err);
   }

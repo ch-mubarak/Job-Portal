@@ -2,51 +2,52 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/userModel");
 
-const registerUser = async (req, res) => {
-  const { name, email, password } = req.body;
-  if (!(email && password && name)) {
-    return res.status(401).json({ message: "All fields are required" });
-  }
-  const userExist = await User.findOne({ email });
-  if (userExist) {
-    return res.status(401).json({ message: "User already exist" });
-  }
-
-  const salt = await bcrypt.genSalt(10);
-  const hashedPassword = await bcrypt.hash(password, salt);
-  const user = await User.create({
-    name,
-    email,
-    password: hashedPassword,
-  });
-
-  user.password = undefined;
-  const token = generateToken(newUser);
-  res.status(201).json({ user, token });
+const registerUser = async (req, res, next) => {
   try {
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: "something went wrong" });
+    const { name, email, password } = req.body;
+    if (!(email && password && name)) {
+      res.status(401);
+      throw new Error("All fields are required");
+    }
+    const userExist = await User.findOne({ email });
+    if (userExist) {
+      res.status(401);
+      throw new Error("User already exist");
+    }
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+    const user = await User.create({
+      name,
+      email,
+      password: hashedPassword,
+    });
+
+    user.password = undefined;
+    const token = generateToken(user);
+    res.status(201).json({ user, token });
+  } catch (err) {
+    next(err);
   }
 };
 
-const loginUser = async (req, res) => {
-  const { email, password } = req.body;
-  if (!email && password) {
-    return res.status(401).json({ message: "All fields are required" });
-  }
+const loginUser = async (req, res, next) => {
   try {
-    const user = await User.find({ email });
+    const { email, password } = req.body;
+    if (!(email && password)) {
+      res.status(401);
+      throw new Error("All fields are required");
+    }
+    const user = await User.findOne({ email });
     if (user && (await bcrypt.compare(password, user.password))) {
       user.password = undefined;
       const token = generateToken(user);
       return res.status(200).json({ user, token });
     } else {
-      return res.status(401).json({ message: "invalid credentials" });
+      res.status(401);
+      throw new Error("Invalid credentials");
     }
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: "something went wrong" });
+  } catch (err) {
+    next(err);
   }
 };
 

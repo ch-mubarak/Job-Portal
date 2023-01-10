@@ -1,23 +1,19 @@
 const jwt = require("jsonwebtoken");
 
 const verifyToken = async (req, res, next) => {
-  const token = req.headers?.authorization?.split(" ")[1];
-  if (!token) {
-    throw new Error({
-      message: "Your not authorized",
-      statusCode: 401,
-    });
-  }
-
-  const user = jwt.verify(token, process.env.JWT_SECRET);
-  req.user = user;
-  next();
   try {
+    const token = req.headers?.authorization?.split(" ")[1];
+    console.log(token);
+    if (!token) {
+      res.status(401);
+      throw new Error("Your not authorized");
+    }
+    const user = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = user;
+    next();
   } catch (err) {
-    throw new Error({
-      message: "Invalid token, not authorized",
-      statusCode: 401,
-    });
+    res.status(401);
+    next(err);
   }
 };
 
