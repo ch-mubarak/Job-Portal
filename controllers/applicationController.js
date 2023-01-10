@@ -11,6 +11,11 @@ const applyJob = async (req, res, next) => {
       res.status(401);
       throw new Error("All fields are required");
     }
+    const isApplied = await Application.findOne({ applicant, jobId });
+    if (isApplied) {
+      res.status(401);
+      throw new Error("You have already applied");
+    }
     const application = await Application.create({
       jobId,
       applicant,
@@ -34,7 +39,7 @@ const getApplicants = async (req, res, next) => {
       res.status(404);
       throw new Error("Invalid job id");
     }
-    if (job.author.toString() !== userId) {
+    if (job.employer.toString() !== userId) {
       res.status(401);
       throw new Error("Your not authorized");
     }

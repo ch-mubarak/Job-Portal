@@ -1,6 +1,7 @@
 const Job = require("../models/jobModel");
 
 const createNewJob = async (req, res, next) => {
+  const { userId } = req.user;
   const { title, description, email, skills, experience } = req.body;
   try {
     if (!(title && description && email)) {
@@ -16,7 +17,7 @@ const createNewJob = async (req, res, next) => {
       throw new Error("Invalid Experience only support numbers");
     }
     const newJob = await Job.create({
-      author: req.user._id,
+      employer: userId,
       title,
       description,
       skills,
@@ -40,8 +41,8 @@ const getJobDetail = async (req, res, next) => {
     }
 
     const job = await Job.findById(jobId).populate({
-      path: "author",
-      select: "-password -_id",
+      path: "employer",
+      select: "-password -_id -createdAt -updatedAt",
     });
 
     if (!job) {
@@ -102,19 +103,22 @@ const getAllJobs = async (req, res, next) => {
     {
       $lookup: {
         from: "users",
-        localField: "author",
+        localField: "employer",
         foreignField: "_id",
-        as: "author",
+        as: "employer",
       },
     },
     {
       $unwind: {
-        path: "$author",
+        path: "$employer",
       },
     },
     {
       $project: {
-        "author.password": false,
+        "employer.password": false,
+        "employer.createdAt": false,
+        "employer.updatedAt": false,
+        "employer._id": false,
       },
     }
   );
@@ -131,12 +135,12 @@ const editJob = async (req, res, next) => {
     const jobId = req.params.id;
     const { userId } = req.user;
     const { title, description, skills, experience } = req.body;
-    const job = await Job.findById(jobId).populate({ path: "author" });
+    const job = await Job.findById(jobId).populate({ path: "employer" });
     if (!job) {
       res.status(404);
       throw new Error("Invalid job id");
     }
-    if (job.author.id !== userId) {
+    if (job.employer.id !== userId) {
       res.status(401);
       throw new Error("Your not authorized");
     }
@@ -150,7 +154,7 @@ const editJob = async (req, res, next) => {
         description,
       },
       { new: true }
-    ).populate({ path: "author", select: "-password" });
+    ).populate({ path: "employer", select: "-password -createdAt -updatedAt" });
     res
       .status(201)
       .json({ message: "job details updated successfully", job: updatedJob });
@@ -170,7 +174,7 @@ const searchJobs = async (req, res, next) => {
     });
     res.status(200).json(jobs);
   } catch (err) {
-    console.log(err)
+    console.log(err);
     next(err);
   }
 };
