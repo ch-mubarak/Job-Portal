@@ -1,25 +1,22 @@
 const Job = require("../models/jobModel");
 
 const createNewJob = async (req, res, next) => {
-  const { userId, email } = req.user;
-  const {
-    title,
-    description,
-    email: recruiterEmail,
-    skills,
-    experience,
-  } = req.body;
+  const { title, description, email, skills, experience } = req.body;
   try {
-    if (!(title && description && recruiterEmail)) {
+    if (!(title && description && email)) {
       res.status(401);
       throw new Error("Title, description and email are mandatory");
     }
-    if (recruiterEmail !== email) {
+    if (req.user.email !== email) {
       res.status(401);
       throw new Error("Entered Email doesn't match with your registered email");
     }
+    if (!(experience && Number(experience))) {
+      res.status(401);
+      throw new Error("Invalid Experience only support numbers");
+    }
     const newJob = await Job.create({
-      author: userId,
+      author: req.user._id,
       title,
       description,
       skills,
@@ -35,18 +32,23 @@ const createNewJob = async (req, res, next) => {
 };
 
 const getJobDetail = async (req, res, next) => {
-  const { jobId } = req.params;
+  const { id } = req.params;
   try {
-    if (!jobId) {
+    if (!id) {
       res.status(401);
       throw new Error("Invalid job id");
     }
-    const job = await Job.findById(jobId)
-      .populate(author)
-      .select({ "author.password": 0 });
+
+    const job = await Job.findById(id).populate({
+      path: "author",
+      select: "-password -_id",
+    });
+
     if (!job) {
-      return res.status(404).json({ message: "No job found" });
+      res.status(404);
+      throw new Error("No job found");
     }
+    res.status(200).json(job);
   } catch (err) {
     next(err);
   }
@@ -56,7 +58,37 @@ const getAllJobs = async (req, res) => {
   const limit = req.query.limit || 5;
   const skip = req.query.skip || 0;
   try {
-    const jobs = await Job.find();
+    const jobs = await Job.aggregate([
+      {
+        $sort: {
+          createdAt: -1,
+        },
+      },
+      {
+        $skip: skip,
+      },
+      {
+        $limit: limit,
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "author",
+          foreignField: "_id",
+          as: "author",
+        },
+      },
+      {
+        $unwind: {
+          path: "$author",
+        },
+      },
+      {
+        $project: {
+          "author.password": false,
+        },
+      },
+    ]);
     return res.status(200).json(jobs);
   } catch (err) {
     next(err);

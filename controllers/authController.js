@@ -21,9 +21,7 @@ const registerUser = async (req, res, next) => {
       email,
       password: hashedPassword,
     });
-
-    user.password = undefined;
-    const token = generateToken(user);
+    const token = generateToken(user._id);
     res.status(201).json({ user, token });
   } catch (err) {
     next(err);
@@ -39,8 +37,7 @@ const loginUser = async (req, res, next) => {
     }
     const user = await User.findOne({ email });
     if (user && (await bcrypt.compare(password, user.password))) {
-      user.password = undefined;
-      const token = generateToken(user);
+      const token = generateToken(user._id);
       return res.status(200).json({ user, token });
     } else {
       res.status(401);
@@ -51,11 +48,10 @@ const loginUser = async (req, res, next) => {
   }
 };
 
-const generateToken = (user) => {
+const generateToken = (userId) => {
   return jwt.sign(
     {
-      userId: user._id,
-      email: user.email,
+      userId,
     },
     process.env.JWT_SECRET,
     {
